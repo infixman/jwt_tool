@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JWT Tool</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    textarea, input { width: 100%; margin: 10px 0; }
+    button { padding: 10px; margin: 5px; }
+    pre { background: #f4f4f4; padding: 10px; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/11.1.0/jsrsasign-all-min.js"></script>
+</head>
+<body>
+  <h1>JWT Tool</h1>
+  
+  <h2>Decode JWT</h2>
+  <textarea id="jwtInput" rows="5" placeholder="Paste your JWT or Base64 string here"></textarea>
+  <button onclick="convertFromBase64()">Convert from Base64</button>
+  <button onclick="decodeJWT()">Decode</button>
+  <button onclick="convertToBase64()">Convert to Base64</button>
+  <pre id="decodeOutput"></pre>
+  
+  <h2>Encode JWT</h2>
+  <input id="secret" type="text" placeholder="Enter secret key (e.g., my-secret)">
+  <textarea id="payloadInput" rows="5" placeholder='Enter payload JSON (e.g., {"sub": "user", "iat": 1516239022})'></textarea>
+  <button onclick="encodeJWT()">Encode</button>
+  <pre id="encodeOutput"></pre>
+
+  <script>
+    function decodeJWT() {
+      const jwt = document.getElementById('jwtInput').value;
+      const output = document.getElementById('decodeOutput');
+      try {
+        if (!jwt) throw new Error('Please enter a JWT');
+        const isValid = KJUR.jws.JWS.verifyJWT(jwt, '', { alg: ['HS256', 'HS384', 'HS512'] });
+        const parsed = KJUR.jws.JWS.parse(jwt);
+        output.textContent = `Header: ${JSON.stringify(parsed.headerObj, null, 2)}\n\nPayload: ${JSON.stringify(parsed.payloadObj, null, 2)}\n\nValid: ${isValid}`;
+      } catch (e) {
+        output.textContent = `Error: ${e.message}`;
+      }
+    }
+
+    function encodeJWT() {
+      const secret = document.getElementById('secret').value;
+      const payload = document.getElementById('payloadInput').value;
+      const output = document.getElementById('encodeOutput');
+      try {
+        if (!secret || !payload) throw new Error('Please enter both secret and payload');
+        let payloadObj;
+        try {
+          payloadObj = JSON.parse(payload);
+        } catch (e) {
+          throw new Error('Invalid JSON payload');
+        }
+        const header = { alg: 'HS256', typ: 'JWT' };
+        const jwt = KJUR.jws.JWS.sign('HS256', header, payloadObj, secret);
+        output.textContent = `Generated JWT:\n${jwt}`;
+      } catch (e) {
+        output.textContent = `Error: ${e.message}`;
+      }
+    }
+
+    function convertToBase64() {
+      const jwtInput = document.getElementById('jwtInput');
+      const output = document.getElementById('decodeOutput');
+      try {
+        if (!jwtInput.value) throw new Error('Please enter a JWT to convert');
+        const base64 = btoa(jwtInput.value);
+        jwtInput.value = base64;
+        output.textContent = `Converted to Base64:\n${base64}`;
+      } catch (e) {
+        output.textContent = `Error: ${e.message}`;
+      }
+    }
+
+    function convertFromBase64() {
+      const jwtInput = document.getElementById('jwtInput');
+      const output = document.getElementById('decodeOutput');
+      try {
+        if (!jwtInput.value) throw new Error('Please enter a Base64 string to convert');
+        const decoded = atob(jwtInput.value);
+        jwtInput.value = decoded;
+        output.textContent = `Converted from Base64:\n${decoded}`;
+      } catch (e) {
+        output.textContent = `Error: ${e.message}`;
+      }
+    }
+  </script>
+</body>
+</html>
