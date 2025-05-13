@@ -2,7 +2,7 @@
 
 A pure front-end web tool for working with JSON Web Tokens (JWTs). Built with HTML, CSS, and JavaScript using `jsrsasign` (v11.1.0). Hosted on GitHub Pages.
 
-**[Live Demo](https://infixman.github.io/jwt_tool)**
+**[Live Demo](https://infixman.github.io/jwt_tool/)**
 
 ## Features
 
@@ -12,7 +12,7 @@ A pure front-end web tool for working with JSON Web Tokens (JWTs). Built with HT
 
 ## Usage
 
-Open `index.html` in a browser or visit the [live demo](https://infixman.github.io/jwt_tool). Paste a JWT to decode, or input a payload and secret to encode. Use Base64 buttons to convert input.
+Open `index.html` in a browser or visit the [live demo](https://infixman.github.io/jwt_tool/). Paste a JWT to decode, or input a payload and secret to encode. Use Base64 buttons to convert input.
 
 **Note**: Avoid using production JWTs, as operations are client-side.
 
