@@ -29,18 +29,31 @@
   <pre id="encodeOutput"></pre>
 
   <script>
-    function decodeJWT() {
-      const jwt = document.getElementById('jwtInput').value;
-      const output = document.getElementById('decodeOutput');
-      try {
-        if (!jwt) throw new Error('Please enter a JWT');
-        const isValid = KJUR.jws.JWS.verifyJWT(jwt, '', { alg: ['HS256', 'HS384', 'HS512'] });
-        const parsed = KJUR.jws.JWS.parse(jwt);
-        output.textContent = `Header: ${JSON.stringify(parsed.headerObj, null, 2)}\n\nPayload: ${JSON.stringify(parsed.payloadObj, null, 2)}\n\nValid: ${isValid}`;
-      } catch (e) {
-        output.textContent = `Error: ${e.message}`;
-      }
+  function decodeJWT() {
+    const jwt = document.getElementById('jwtInput').value;
+    const output = document.getElementById('decodeOutput');
+    try {
+      if (!jwt) throw new Error('Please enter a JWT');
+      const isValid = KJUR.jws.JWS.verifyJWT(jwt, '', { alg: ['HS256', 'HS384', 'HS512'] });
+      const parsed = KJUR.jws.JWS.parse(jwt);
+      const payload = { ...parsed.payloadObj };
+
+      // Convert known timestamp fields and append UTC time
+      ['iat', 'exp', 'nbf'].forEach(key => {
+        if (payload[key]) {
+          const utcTime = new Date(payload[key] * 1000).toISOString().replace('T', ' ').replace('Z', '');
+          payload[key] = `${payload[key]}  // ${utcTime}`;
+        }
+      });
+
+      output.textContent =
+        `Header: ${JSON.stringify(parsed.headerObj, null, 2)}\n\n` +
+        `Payload: ${JSON.stringify(payload, null, 2)}\n\n` +
+        `Valid: ${isValid}`;
+    } catch (e) {
+      output.textContent = `Error: ${e.message}`;
     }
+  }
 
     function encodeJWT() {
       const secret = document.getElementById('secret').value;
