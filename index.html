@@ -29,31 +29,47 @@
   <pre id="encodeOutput"></pre>
 
   <script>
-  function decodeJWT() {
-    const jwt = document.getElementById('jwtInput').value;
-    const output = document.getElementById('decodeOutput');
-    try {
-      if (!jwt) throw new Error('Please enter a JWT');
-      const isValid = KJUR.jws.JWS.verifyJWT(jwt, '', { alg: ['HS256', 'HS384', 'HS512'] });
-      const parsed = KJUR.jws.JWS.parse(jwt);
-      const payload = { ...parsed.payloadObj };
-
-      // Convert known timestamp fields and append UTC time
-      ['iat', 'exp', 'nbf'].forEach(key => {
-        if (payload[key]) {
-          const utcTime = new Date(payload[key] * 1000).toISOString().replace('T', ' ').replace('Z', '');
-          payload[key] = `${payload[key]}  // ${utcTime}`;
-        }
-      });
-
-      output.textContent =
-        `Header: ${JSON.stringify(parsed.headerObj, null, 2)}\n\n` +
-        `Payload: ${JSON.stringify(payload, null, 2)}\n\n` +
-        `Valid: ${isValid}`;
-    } catch (e) {
-      output.textContent = `Error: ${e.message}`;
+    function formatUTC(timestamp) {
+      const date = new Date(timestamp * 1000);
+      const pad = n => n.toString().padStart(2, '0');
+      return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())} ` +
+            `${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}.000`;
     }
-  }
+
+    function decodeJWT() {
+      const jwt = document.getElementById('jwtInput').value;
+      const output = document.getElementById('decodeOutput');
+      try {
+        if (!jwt) throw new Error('Please enter a JWT');
+        const isValid = KJUR.jws.JWS.verifyJWT(jwt, '', { alg: ['HS256', 'HS384', 'HS512'] });
+        const parsed = KJUR.jws.JWS.parse(jwt);
+        const payload = parsed.payloadObj;
+        const header = JSON.stringify(parsed.headerObj, null, 2);
+
+        // Manually format the payload with UTC comment for timestamps
+        const lines = ['{'];
+        const keys = Object.keys(payload);
+        keys.forEach((key, index) => {
+          const value = payload[key];
+          const isTimestamp = ['iat', 'exp', 'nbf'].includes(key) && typeof value === 'number';
+          const utcComment = isTimestamp
+            ? `  // ${formatUTC(value)}`
+            : '';
+          const formattedValue = typeof value === 'string'
+            ? `"${value}"`
+            : value;
+          const comma = index === keys.length - 1 ? '' : ',';
+          lines.push(`  "${key}": ${formattedValue}${comma}${utcComment}`);
+        });
+        lines.push('}');
+        const payloadFormatted = lines.join('\n');
+
+        output.textContent =
+          `Header: ${header}\n\nPayload:\n${payloadFormatted}\n\nValid: ${isValid}`;
+      } catch (e) {
+        output.textContent = `Error: ${e.message}`;
+      }
+    }
 
     function encodeJWT() {
       const secret = document.getElementById('secret').value;
